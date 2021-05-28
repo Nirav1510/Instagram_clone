@@ -4,7 +4,7 @@ import Post from "./Post";
 import { db } from "./firebase";
 import { makeStyles } from "@material-ui/core/styles";
 import Modal from "@material-ui/core/Modal";
-import { Button } from "@material-ui/core";
+import { Button, Input } from "@material-ui/core";
 
 function getModalStyle() {
   const top = 50;
@@ -31,8 +31,12 @@ const useStyles = makeStyles((theme) => ({
 function App() {
   const classes = useStyles();
   const [modalStyle] = useState(getModalStyle);
+
   const [posts, setPosts] = useState([]);
   const [open, setOpen] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
     //this is where code runs
@@ -47,16 +51,39 @@ function App() {
     });
   }, []);
 
-  const signUp = (event) => {
-
-  }
+  const signUp = (event) => {};
   return (
     <div className="app">
       <Modal open={open} onClose={() => setOpen(false)}>
         <div style={modalStyle} className={classes.paper}>
-        <center>
-         <img className="app__headerimage" alt="abc" src="https://e7.pngegg.com/pngimages/712/1009/png-clipart-letter-instagram-font-instagram-text-logo.png"></img>
-        </center>
+          <form className="app__signUp">
+            <center>
+              <img
+                className="app__headerImage"
+                src="https://e7.pngegg.com/pngimages/712/1009/png-clipart-letter-instagram-font-instagram-text-logo.png"
+                alt=""
+              />
+            </center>
+            <Input
+              placeholder="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+            <Input
+              placeholder="email"
+              type="text"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <Input
+              placeholder="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <Button onClick={signUp}>Sign Up</Button>
+          </form>
         </div>
       </Modal>
 
@@ -64,12 +91,13 @@ function App() {
         <img
           className="app__headerImage"
           src="https://e7.pngegg.com/pngimages/712/1009/png-clipart-letter-instagram-font-instagram-text-logo.png"
+          alt=""
         />
       </div>
 
-      <Button onClick={() => setOpen(true)}>Sing Up</Button>
-
+      <Button onClick={() => setOpen(true)}>Sign Up</Button>
       <h1>HELLO NIRAV let's built an Instagram Clone </h1>
+
       {posts.map(({ id, post }) => (
         <Post
           key={id}
