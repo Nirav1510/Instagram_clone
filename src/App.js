@@ -5,7 +5,9 @@ import { auth, db } from "./firebase";
 import { makeStyles } from "@material-ui/core/styles";
 import Modal from "@material-ui/core/Modal";
 import { Button, Input } from "@material-ui/core";
-import ImageUpload from './ImageUpload';
+import ImageUpload from "./ImageUpload";
+import InstagramEmbed from "react-instagram-embed";
+import firebase from "firebase";
 
 function getModalStyle() {
   const top = 50;
@@ -39,46 +41,40 @@ function App() {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [user, setUser] = useState(null);
-  
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((authUser) => {
       if (authUser) {
-        //user has logged in....
         console.log(authUser);
         setUser(authUser);
-
-        // if (authUser.displayName) {
-        //   //don't update
-        // } else {
-        //   //if we just created someone
-        //   return authUser.updateProfile({
-        //     displayName: username,
-        //   });
-        // }
+        if (authUser.displayName) {
+        } else {
+          return authUser.updateProfile({
+            displayName: username,
+          });
+        }
       } else {
-        //user has logged out...
         setUser(null);
       }
     });
-
     return () => {
-      //perform some cleanup actions
       unsubscribe();
     };
   }, [user, username]);
 
   useEffect(() => {
     //this is where code runs
-    db.collection("posts").onSnapshot((snapshot) => {
-      // every time a new post is added, this code runs
-      setPosts(
-        snapshot.docs.map((doc) => ({
-          id: doc.id,
-          post: doc.data(),
-        }))
-      );
-    });
+    db.collection("posts")
+      .orderBy("timestamp", "desc")
+      .onSnapshot((snapshot) => {
+        // every time a new post is added, this code runs
+        setPosts(
+          snapshot.docs.map((doc) => ({
+            id: doc.id,
+            post: doc.data(),
+          }))
+        );
+      });
   }, []);
 
   const signUp = (event) => {
@@ -91,38 +87,27 @@ function App() {
         });
       })
       .catch((error) => alert(error.message));
-      setOpen(false);
+    setOpen(false);
   };
 
   const signIn = (event) => {
     event.preventDefault();
     auth
       .signInWithEmailAndPassword(email, password)
-      .catch((error) => alert(error.message))
 
+      .catch((error) => alert(error.message));
     setOpenSignIn(false);
-  }
+  };
 
   return (
     <div className="app">
-
-      {user?.displayName ? (
-        <ImageUpload username={user.displayName} />
-      ): (
-        <h3>Sorry you need to login to upload</h3>
-      )}
-      
-
-
-      <Modal 
-      open={open} 
-      onClose={() => setOpen(false)}>
+      <Modal open={open} onClose={() => setOpen(false)}>
         <div style={modalStyle} className={classes.paper}>
           <form className="app__signUp">
             <center>
               <img
                 className="app__headerImage"
-                src="https://e7.pngegg.com/pngimages/712/1009/png-clipart-letter-instagram-font-instagram-text-logo.png"
+                src="https://www.instagram.com/static/images/web/mobile_nav_type_logo.png/735145cfe0a4.png"
                 alt=""
               />
             </center>
@@ -151,21 +136,19 @@ function App() {
         </div>
       </Modal>
 
-      <Modal 
-      open={openSignIn} 
-      onClose={() => setOpenSignIn(false)}>
+      <Modal open={openSignIn} onClose={() => setOpenSignIn(false)}>
         <div style={modalStyle} className={classes.paper}>
           <form className="app__signUp">
             <center>
               <img
                 className="app__headerImage"
-                src="https://e7.pngegg.com/pngimages/712/1009/png-clipart-letter-instagram-font-instagram-text-logo.png"
-                alt=""
+                src="https://www.instagram.com/static/images/web/mobile_nav_type_logo.png/735145cfe0a4.png"
+                alt="abc"
               />
             </center>
             <Input
               placeholder="email"
-              type="text"
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -175,7 +158,9 @@ function App() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <Button type="submit" onClick={signUp}>Sign In</Button>
+            <Button type="submit" onClick={signIn}>
+              Sign In
+            </Button>
           </form>
         </div>
       </Modal>
@@ -183,30 +168,53 @@ function App() {
       <div className="app__header">
         <img
           className="app__headerImage"
-          src="https://e7.pngegg.com/pngimages/712/1009/png-clipart-letter-instagram-font-instagram-text-logo.png"
+          src="https://www.instagram.com/static/images/web/mobile_nav_type_logo.png/735145cfe0a4.png"
           alt=""
         />
+        {user ? (
+          <Button onClick={() => auth.signOut()}>Logout</Button>
+        ) : (
+          <div className="app__loginContainer">
+            <Button onClick={() => setOpenSignIn(true)}>Sign In</Button>
+            <Button onClick={() => setOpen(true)}>Sign Up</Button>
+          </div>
+        )}
       </div>
 
-      {user ? (
-        <Button onClick={() => auth.signOut()}>Logout</Button>
-      ) : (
-        <div className="app__loginContainer">
-          <Button onClick={() => setOpenSignIn(true)}>Sign In</Button>
-          <Button onClick={() => setOpen(true)}>Sign Up</Button>
+      <div className="app__posts">
+        <div className="app__postsLeft">
+          {posts.map(({ id, post }) => (
+            <Post
+              key={id}
+              postId={id}
+              user={user}
+              username={post.username}
+              caption={post.caption}
+              imageUrl={post.imageUrl}
+            />
+          ))}
         </div>
+        <div className="app_postsRight">
+          <InstagramEmbed
+            url="https://www.instagram.com/p/B3ekQjoltlDImUirH0U5JFaFBETXrNLDxl-iig0/"
+            maxWidth={320}
+            hideCaption={false}
+            containerTagName="div"
+            protocol=""
+            injectScript
+            onLoading={() => {}}
+            onSuccess={() => {}}
+            onAfterRender={() => {}}
+            onFailure={() => {}}
+          />
+        </div>
+      </div>
+
+      {user?.displayName ? (
+        <ImageUpload username={user.displayName} />
+      ) : (
+        <h3>Sorry you need to login to upload</h3>
       )}
-
-      <h1>HELLO NIRAV let's built an Instagram Clone </h1>
-
-      {posts.map(({ id, post }) => (
-        <Post
-          key={id}
-          username={post.username}
-          caption={post.caption}
-          imageUrl={post.imageUrl}
-        />
-      ))}
     </div>
   );
 }
